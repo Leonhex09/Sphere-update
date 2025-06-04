@@ -438,33 +438,6 @@ body.dark-mode #favorites-list li {
     left: 10px;
   }
 }
- 
-  #welcomeMessage {
-    opacity: 0;
-    background-color: lightblue; /* Green background */
-    color: white;
-    padding: 20px 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    font-size: 18px;
-    max-width: 80%;
-    text-align: center;
-    transition: opacity 1s ease, transform 0.5s ease;
-    transform: translateY(-20px);
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) translateY(-20px);
-  }
-
-  /* Optional: Style for the image */
-  #welcomeMessage img {
-    max-width: 100px;
-    height: auto;
-    display: block;
-    margin: 10px auto;
-    border-radius: 5px;
-  }
 
 </style>
 </head>
@@ -928,32 +901,6 @@ Join us on:
     </div>
   </div>
 </footer>
-<div id="welcomeMessage">
-  <h2>Welcome to LiveSphere!</h2>
-  <!-- Insert your image here -->
-  <img src="http://static.startimestv.com/static/files/production/poster/2025/5/1877385.jpg?l=240" alt="Welcome Image" />
-  <p>plz share app.</p>
-</div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const messageBox = document.getElementById('welcomeMessage');
-    // Show the message
-    setTimeout(() => {
-      messageBox.style.opacity = 1;
-      messageBox.style.transform = 'translate(-50%, -50%) translateY(0)';
-    }, 100);
-
-    // Hide after 16 seconds
-    setTimeout(() => {
-      messageBox.style.opacity = 0;
-      messageBox.style.transform = 'translate(-50%, -50%) translateY(-20px)';
-    }, 5000);
-  });
-</script>
-
-
-
 </body>
 </html>
 
