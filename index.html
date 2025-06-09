@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>liveb sphere</title>
+<!-- Include hls.js for better HLS support -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<!-- Optional: Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<style>
+  /* Reset & base styles */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans;
+  background-color: #f0f4f8;
+  color: #333;
+  line-height: 1.6;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark mode styles */
+body.dark-mode {
+  background-color: #121212;
+  color: #eee;
+}
+
+.footer {
+  background-color: #888;
+  color: #fbb;
+  padding: 20px;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.footer-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.social-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.social-links li {
+  display: inline-block;
+  margin-right: 20px;
+}
+
+.social-links a {
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.social-links a:hover {
+  color: #ccc;
+}
+
+/* Header styling */
+header {
+  position: relative;
+  background-color: #1e88e5;
+  padding: 30px 50px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  flex-wrap: wrap;
+}
+header h1 {
+  color: #fff;
+  font-size: 2.2em;
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-top: 40px;
+  margin-left: 25px;
+}
+nav a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 25px;
+  font-weight: 600;
+  font-size: 1em;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.3s, transform 0.3s;
+}
+nav a:hover {
+  background-color: #1565c0;
+  transform: translateY(-2px);
+}
+
+/* Mode toggle button */
+#mode-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #ff;
+  border-bottom: 3px solid green; 
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9em;
+  transition: background 0.3s, color 0.3s;
+}
+body.dark-mode #mode-toggle {
+  background: #333;
+  color: #eee;
+}
+
+/* Container & headings */
+.container {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.containerr {
+  padding: 0 20px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 2em;
+  color: #1565c0;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+h2:nth-child(odd) {
+  margin-top: 50px;
+}
+
+/* Channels grid */
+.channel-grid {
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+/* Individual channel card */
+.channel {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  transition: background-color 0.3s;
+}
+body.dark-mode .channel {
+  background-color: #222;
+}
+
+/* Favorite star icon positioned at top-right of video container */
+.fav-star {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 1.5em;
+  cursor: pointer;
+  color: #ccc;
+  z-index: 10;
+  transition: color 0.3s, transform 0.2s;
+}
+.fav-star.favorited {
+  color: #ffcc00;
+  transform: scale(1.2);
+}
+
+/* Video container styled to look like a live TV screen */
+.video-container {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  height: 180px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #000; /* dark background for TV screen */
+
+  /* TV frame and glow effect */
+  border: 4px solid #444; /* outer border resembling a TV frame */
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5);
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+.video-container:hover {
+  border-color: #ffcc00;
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.9), 0 0 25px rgba(255, 204, 0, 0.7);
+}
+
+/* Style for the video element to appear sleek and TV-like */
+video {
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  border-radius: 4px;
+  border: none;
+  /* Optional glow for a more TV-like effect */
+  /* box-shadow: 0 0 8px rgba(255,255,255,0.3); */
+}
+
+/* Specific styles for the stream video in ARK TV */
+#video-stream {
+  border-radius: 8px;
+  border: 2px solid #333;
+  /* Additional glow or effect can be added here if desired */
+}
+
+/* Uniform style for all channel videos to look like TV screens */
+#video-galaxy, #video-kbs, #video-acw, #video-dream, #video-gugudde, #video-fort-special, #video-tv-west,
+#video-abn, #video-spirit, #video-ftv, #video-ark, #video-1kzn, #video-2gb {
+  border-radius: 8px;
+  border: 4px solid #444;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5);
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+#video-galaxy:hover, #video-kbs:hover, #video-acw:hover, #video-dream:hover, #video-gugudde:hover,
+#video-fort-special:hover, #video-tv-west:hover, #video-abn:hover, #video-spirit:hover,
+#video-ftv:hover, #video-ark:hover, #video-1kzn:hover, #video-2gb:hover {
+  border-color: #ffcc00;
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.9), 0 0 25px rgba(255, 204, 0, 0.7);
+}
+/* Buttons styling */
+button {
+  background-color: #1e88e5;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+button:hover {
+  background-color: #1565c0;
+  transform: translateY(-2px);
+}
+
+/* Optional: style for the 'Donate' button, if you want it different */
+#donate-btn {
+  background-color: #e91e63;
+  margin-top: 15px;
+}
+#donate-btn:hover {
+  background-color: #c2185b;
+}
+
+/* Keep default appearance for video controls for cross-browser consistency */
+video {
+  /* No custom styles applied here; default controls will appear */
+}
+
+#donate-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #e91e63;
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 24px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: background-color 0.3s, transform 0.2s;
+  z-index: 1000; /* make sure it stays on top */
+}
+#donate-btn:hover {
+  background-color: #c2185b;
+  transform: scale(1.05);
+}/* Buttons styling */
+button {
+  background-color: #1e88e5;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+button:hover {
+  background-color: #1565c0;
+  transform: translateY(-2px);
+}
+
+/* Optional: style for the 'Donate' button, if you want it different */
+#donate-btn {
+  background-color: #e91e63;
+  margin-top: 15px;
+}
+#donate-btn:hover {
+  background-color: #c2185b;
+}
+
+/* Keep default appearance for video controls for cross-browser consistency */
+video {
+  /* No custom styles applied here; default controls will appear */
+}
+
+
+#audrey-links {
+  position: fixed;
+  bottom: 80px; /* adjust as needed to stay above other elements */
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* space between icons */
+  z-index: 1000;
+}
+
+#audrey-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  font-size: 2em; /* increase icon size */
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#audrey-links a:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+  
+#sidebar {
+  position: fixed;
+  top: 0;
+  left: -250px;
+  width: 250px;
+  height: 100%;
+  background-color: #fff;
+  color: #333;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+  z-index: 9999;
+  padding: 20px;
+  transition: left 0.3s ease;
+  overflow-y: auto;
+}
+body.dark-mode #sidebar {
+  background-color: #222;
+  color: #eee;
+}
+#sidebar.active {
+  left: 0;
+}
+#sidebar h3 {
+  margin-bottom: 20px;
+  text-align: center;
+  color: #1565c0;
+}
+
+/* Toggle sidebar button */
+#toggle-sidebar {
+  position: fixed;
+  top: 20px;
+  left: 10px;
+  background: #1e88e5;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #fff;
+  z-index: 10000;
+  font-weight: 600;
+}
+body.dark-mode #toggle-sidebar {
+  background: #333;
+}
+
+/* Favorites list in sidebar */
+#favorites-list {
+  list-style: none;
+}
+#favorites-list li {
+  padding: 8px;
+  margin-bottom: 8px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+body.dark-mode #favorites-list li {
+  background: #444;
+}
+#favorites-list li span {
+  flex: 1;
+}
+#favorites-list li button {
+  background: transparent;
+  border: none;
+  color: #d32f2f;
+  font-size: 1.2em;
+  cursor: pointer;
+}
+#favorites-list li button:hover {
+  color: #b71c1c;
+}
+  
+  
+  #people-watching {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 30px 0;
+  font-size: 1.4em;
+  font-weight: bold;
+  color: #d32f2f;
+}
+#people-watching span {
+  margin-left: 10px;
+  font-size: 1.6em;
+  color: #d32f2f;
+}
+#search-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+#search-input {
+  padding: 8px 12px;
+  font-size: 1em;
+  border: 2px solid #ccc;
+  border-radius: 6px 0 0 6px;
+  outline: none;
+  width: 250px;
+}
+#search-button {
+  padding: 8px 16px;
+  font-size: 1em;
+  border: none;
+  border-radius: 0 6px 6px 0;
+  background-color: #1e88e5;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+#search-button:hover {
+  background-color: #1565c0;
+}
+
+  * Basic container styling */
+.container {
+    width: 80%;
+    margin: 20px auto;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Header styling */
+.header {
+   width: 100%;
+    background-color: #5555;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 5px;
+    color: #55
+}
+;
+}
+
+/* Hover effect */
+.header:hover {
+    background-color: #e0e0e0;
+}
+
+/* Icon styling and transition */
+.header .icon {
+    font-size: 16px;
+    transition: transform 0.3s ease-out;
+}
+
+/* Rotate icon when header is active */
+.header.active .icon {
+    transform: rotate(180deg);
+}
+
+/* Content styling */
+.content {
+    padding: 0 10px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+/* Show content when class is added */
+.content.show {
+    max-height: 1000px; /* increased for more content */
+    padding: 10px;
+    transition: max-height 0.3s ease-in;
+}
+
+/* Category list styling */
+.category {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+/* Category name styling */
+.category span {
+    font-weight: bold;
+}
+
+/* Redirection icon style */
+.redirect-icon {
+    color: red;
+    font-size: 20px;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: color 0.2s;
+}
+
+.redirect-icon:hover {
+    color: darkred;
+}
+
+#one{
+    position: relative
+}
+
+#groupe {
+    border: 2px solid #007bff; /* Changed the border color to a nice blue */
+    width: 95%;
+    overflow-y: auto;
+    margin: 0 auto; /* Added this to center the div horizontally */
+    padding: 20px; /* Added some padding to give the content some space */
+    background-color: #f7f7f7; /* Added a light gray background color */
+    border-radius: 10px; /* Added some rounded corners */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Added a subtle box shadow */
+    display: flex; /* Added this to enable flexbox */
+    flex-direction: column; /* Added this to stack the content vertically */
+    align-items: center; /* Corrected the typo here */
+    justify-content: center;
+}
+
+
+
+.content {
+    overflow-y: auto;
+    white-space: nowrap;
+    color: yellow 
+}
+
+
+.containerr {
+    flex: 1;
+   background: #555;
+    overflow-y: auto;
+   border-radius: 10px;
+   width: 100%;
+   margin: 5px;
+   color: green;
+}
+
+
+/* Horizontal scroll container for countries */
+#country-scroll-wrapper {
+  display: flex;
+  overflow-x: auto;
+  padding: 15px;
+  gap: 15px;
+  scroll-behavior: smooth;
+}
+
+#country-scroll-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+#country-scroll-wrapper::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+/* Individual country card styling */
+.country-card {
+  flex: 0 0 auto;
+  width: 280px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.country-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+/* Header of each country block */
+.country-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  background-color: #f9f9f9;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.country-header span {
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.country-header .icon {
+  font-size: 18px;
+  transition: transform 0.3s ease;
+}
+
+.country-header.active .icon {
+  transform: rotate(180deg);
+}
+
+/* Expandable content area */
+.country-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+  padding: 0 15px;
+}
+
+.country-content.show {
+  max-height: 500px; /* enough for content */
+  padding: 10px 15px;
+}
+
+/* Category list styling */
+.category {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+}
+
+.category:last-child {
+  border-bottom: none;
+}
+
+/* Text styles inside categories */
+.category span {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Redirect icon styles (clickable) */
+.redirect-icon {
+  font-size: 1.2rem;
+  color: #d33;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.redirect-icon:hover {
+  color: #a00;
+}
+
+/* Responsive adjustments */
+@media(max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+
+  #country-scroll-wrapper {
+    padding: 10px;
+  }
+}
+
+</style>
+</head>
+<body id="one">
+
+<header>
+  <h1>Livesphere</h1>
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#channels">Channels</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <button id="mode-toggle">Dark Mode</button>
+</header>
+
+<div id="country-scroll-wrapper">
+
+  <!-- Example country block: Algeria (A) -->
+  <div class="country-card">
+    <div class="country-header" onclick="toggleDetails(this)">
+      <span>🇩🇿 Algeria</span>
+      <span class="icon">▼</span>
+    </div>
+    <div class="country-content">
+      <div class="category">
+        <span class="redirect-icon" onclick="redirectTo('sports-algeria')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Entertainment</span>
+        <span class="redirect-icon" onclick="redirectTo('entertainment-algeria')">➡️</span>
+      </div>
+      <div class="category">
+        <span>News</span>
+        <span class="redirect-icon" onclick="redirectTo('news-algeria')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Kids</span>
+        <span class="redirect-icon" onclick="redirectTo('kids-algeria')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Other TV Guide</span>
+        <span class="redirect-icon" onclick="redirectTo('tvguide-algeria')">➡️</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Angola (A) -->
+  <div class="country-card">
+    <div class="country-header" onclick="toggleDetails(this)">
+      <span>🇦🇴 Angola</span>
+      <span class="icon">▼</span>
+    </div>
+    <div class="country-content">
+      <div class="category">
+        <span class="redirect-icon" onclick="redirectTo('sports-angola')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Entertainment</span>
+        <span class="redirect-icon" onclick="redirectTo('entertainment-angola')">➡️</span>
+      </div>
+      <div class="category">
+        <span>News</span>
+        <span class="redirect-icon" onclick="redirectTo('news-angola')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Kids</span>
+        <span class="redirect-icon" onclick="redirectTo('kids-angola')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Other TV Guide</span>
+        <span class="redirect-icon" onclick="redirectTo('tvguide-angola')">➡️</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Antigua and Barbuda (A) -->
+  <div class="country-card">
+    <div class="country-header" onclick="toggleDetails(this)">
+      <span>🇦🇬 Antigua and Barbuda</span>
+      <span class="icon">▼</span>
+    </div>
+    <div class="country-content">
+      <div class="category">
+        <span class="redirect-icon" onclick="redirectTo('sports-antigua')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Entertainment</span>
+        <span class="redirect-icon" onclick="redirectTo('entertainment-antigua')">➡️</span>
+      </div>
+      <div class="category">
+        <span>News</span>
+        <span class="redirect-icon" onclick="redirectTo('news-antigua')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Kids</span>
+        <span class="redirect-icon" onclick="redirectTo('kids-antigua')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Other TV Guide</span>
+        <span class="redirect-icon" onclick="redirectTo('tvguide-antigua')">➡️</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Argentina (A) -->
+  <div class="country-card">
+    <div class="country-header" onclick="toggleDetails(this)">
+      <span>🇦🇷 Argentina</span>
+      <span class="icon">▼</span>
+    </div>
+    <div class="country-content">
+      <div class="category">
+        <span class="redirect-icon" onclick="redirectTo('sports-argentina')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Entertainment</span>
+        <span class="redirect-icon" onclick="redirectTo('entertainment-argentina')">➡️</span>
+      </div>
+      <div class="category">
+        <span>News</span>
+        <span class="redirect-icon" onclick="redirectTo('news-argentina')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Kids</span>
+        <span class="redirect-icon" onclick="redirectTo('kids-argentina')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Other TV Guide</span>
+        <span class="redirect-icon" onclick="redirectTo('tvguide-argentina')">➡️</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Armenia (A) -->
+  <div class="country-card">
+    <div class="country-header" onclick="toggleDetails(this)">
+      <span>🇦🇲 Armenia</span>
+      <span class="icon">▼</span>
+    </div>
+    <div class="country-content">
+      <div class="category">
+        <span class="redirect-icon" onclick="redirectTo('sports-armenia')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Entertainment</span>
+        <span class="redirect-icon" onclick="redirectTo('entertainment-armenia')">➡️</span>
+      </div>
+      <div class="category">
+        <span>News</span>
+        <span class="redirect-icon" onclick="redirectTo('news-armenia')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Kids</span>
+        <span class="redirect-icon" onclick="redirectTo('kids-armenia')">➡️</span>
+      </div>
+      <div class="category">
+        <span>Other TV Guide</span>
+        <span class="redirect-icon" onclick="redirectTo('tvguide-armenia')">➡️</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggleDetails(headerElement) {
+  headerElement.classList.toggle('active');
+  const content = headerElement.nextElementSibling;
+  content.classList.toggle('show');
+}
+
+function redirectTo(category) {
+  alert('Redirecting to ' + category);
+}
+</script>
+
+<!-- Sidebar toggle button -->
+<button id="toggle-sidebar">Favorites</button>
+    
+<!-- Audrey contact links (WhatsApp & Telegram) -->
+<div id="audrey-links">
+  <a href="https://wa.me/256779085558" target="_blank" title="Chat on WhatsApp" style="color:#25D366;">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+  <a href="https://t.me/brave256" target="_blank" title="Message on Telegram" style="color:#0088cc;">
+    <i class="fab fa-telegram"></i>
+  </a>
+</div>
+<div id="sidebar">
+  <h3>Starred Channels</h3>
+  <ul id="favorites-list"></ul>
+</div>
+
+<!-- People Watching Counter -->
+<div id="people-watching">
+  People Watching:
+  <span id="watch-count">823</span>
+</div>
+
+<!-- Search Channel -->
+<div id="search-container">
+  <input type="text" id="search-input" placeholder="Search channels..." />
+  <button id="search-button">Search</button>
+</div>
+
+<!-- Donate button -->
+<a href="#"><button id="donate-btn" title="Support us!">Donate</button></a>
+
+<!-- Main content: Channels -->
+<div class="container" id="channels">
+
+  <div class="channel-grid" id="channel-grid">
+    <!-- Optional featured channels can go here -->
+  </div>
+
+  <h2 style="margin-top:50px;">Local Channels</h2>
+  <div class="channel-grid" id="individual-channels">
+
+    <!-- BUKEDDE 1 -->
+    <div class="channel" data-name="BUKEDDE 1" data-favorites="false">
+      <div class="video-container" data-current-image="http://static.startimestv.com/static/files/production/poster/2025/5/1877385.jpg?l=240">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'BUKEDDE 1')">★</div>
+        <div class="bg-image" style="background-image: url('http://static.startimestv.com/static/files/production/poster/2025/5/1877385.jpg?l=240');"></div>
+        <video id="video-bukedde1" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">BUKEDDE 1</p>
+      <button class="load-btn" onclick="loadStream('video-bukedde1', 'https://stream.hydeinnovations.com/bukedde1flussonic/index.m3u8?', 'https://via.placeholder.com/280x180.png?text=BUKEDDE+1+Live')">Play BUKEDDE 1</button>
+      <button class="pip-btn" onclick="togglePiP('video-bukedde1')">PiP</button>
+    </div>
+
+    <!-- BUKEDDE 2 -->
+    <div class="channel" data-name="BUKEDDE 2" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=BUKEDDE+2+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'BUKEDDE 2')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=BUKEDDE+2+Live');"></div>
+        <video id="video-bukedde2" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">BUKEDDE 2</p>
+      <button class="load-btn" onclick="loadStream('video-bukedde2', 'https://stream.hydeinnovations.com/bukedde2flussonic/index.m3u8?', 'https://via.placeholder.com/280x180.png?text=BUKEDDE+2+Live')">Play BUKEDDE 2</button>
+      <button class="pip-btn" onclick="togglePiP('video-bukedde2')">PiP</button>
+    </div>
+
+    <!-- GALAXY TV -->
+    <div class="channel" data-name="GALAXY TV" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=ARK+TV+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'GALAXY TV')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=ARK+TV+Live');"></div>
+        <video id="video-galaxy" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">GALAXY TV</p>
+      <button class="load-btn" onclick="loadStream('video-galaxy', 'https://stream-200573.castr.net/6463248048d6cd3e143655b2/live_43351ad0f3b411ed81c78fcc31887c54/tracks-v3a1/rewind-3600.ts.m3u8', 'https://via.placeholder.com/280x180.png?text=ARK+TV+Live')">Play GALAXY TV</button>
+      <button class="pip-btn" onclick="togglePiP('video-galaxy')">PiP</button>
+    </div>
+
+    <!-- KBS TV -->
+    <div class="channel" data-name="KBS TV" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=KBS+TV+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'KBS TV')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=KBS+TV+Live');"></div>
+        <video id="video-kbs" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">KBS TV</p>
+      <button class="load-btn" onclick="loadStream('video-kbs', 'http://45.221.8.161:9091/mediaserver/hls/mychannel.m3u8', 'https://via.placeholder.com/280x180.png?text=KBS+TV+Live')">Play KBS TV</button>
+      <button class="pip-btn" onclick="togglePiP('video-kbs')">PiP</button>
+    </div>
+
+    <!-- ACW TV -->
+    <div class="channel" data-name="ACW TV" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=ACW+TV+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'ACW TV')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=ACW+TV+Live');"></div>
+        <video id="video-acw" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">ACW TV</p>
+      <button class="load-btn" onclick="loadStream('video-acw', 'https://live.acwugtv.com/hls/1/stream.m3u8')">Play ACW TV</button>
+      <button class="pip-btn" onclick="togglePiP('video-acw')">PiP</button>
+    </div>
+        
+    <!-- DREAM TV -->
+    <div class="channel" data-name="DREAM TV" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=DREAM+TV+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'DREAM TV')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=DREAM+TV+Live');"></div>
+        <video id="video-dream" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">DREAM TV</p>
+      <button class="load-btn" onclick="loadStream('video-dream', 'https://streamfi-dreamtv1.zettawiseroutes.com:8181/hls/stream_low.m3u8', 'https://via.placeholder.com/280x180.png?text=DREAM+TV+Live')">Play DREAM TV</button>
+      <button class="pip-btn" onclick="togglePiP('video-dream')">PiP</button>
+    </div>
+
+    <!-- GUGUDDE TV -->
+    <div class="channel" data-name="GUGUDDE TV" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=GUGUDDE+TV+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'GUGUDDE TV')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=GUGUDDE+TV+Live');"></div>
+        <video id="video-gugudde" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">GUGUDDE TV</p>
+      <button class="load-btn" onclick="loadStream('video-gugudde', 'https://jk3lzqq4lw79-hls-live.5centscdn.com/gugudde/c9a1fdac6e082dd89e7173244f34d7b3.sdp/chunks.m3u8', 'https://via.placeholder.com/280x180.png?text=GUGUDDE+TV+Live')">Play GUGUDDE TV</button>
+      <button class="pip-btn" onclick="togglePiP('video-gugudde')">PiP</button>
+    </div>
+
+    <!-- FORT TV SPECIAL -->
+    <div class="channel" data-name="FORT TV SPECIAL" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=FORT+TV+SPECIAL+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'FORT TV SPECIAL')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=FORT+TV+SPECIAL+Live');"></div>
+        <video id="video-fort-special" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">FORT TV SPECIAL</p>
+      <button class="load-btn" onclick="loadStream('video-fort-special', 'https://fort.co-works.org/memfs/87017643-274a-4bc0-a786-7767a0d159c2_output_0.m3u8?session=KpyNb2TAExLsCzFCD3BGPz', 'https://via.placeholder.com/280x180.png?text=FORT+TV+SPECIAL+Live')">Play FORT TV SPECIAL</button>
+      <button class="pip-btn" onclick="togglePiP('video-fort-special')">PiP</button>
+    </div>
+
+    <!-- TV WEST -->
+    <div class="channel" data-name="TV WEST" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=TV+WEST+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'TV WEST')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=TV+WEST+Live');"></div>
+        <video id="video-tv-west" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">TV WEST</p>
+      <button class="load-btn" onclick="loadStream('video-tv-west', 'https://stream.hydeinnovations.com/tvwest-flussonic/tracks-v3a1/mono.m3u8', 'https://via.placeholder.com/280x180.png?text=TV+WEST+Live')">Play TV WEST</button>
+      <button class="pip-btn" onclick="togglePiP('video-tv-west')">PiP</button>
+    </div>
+
+    <!-- 3ABN TV -->
+    <div class="channel" data-name="3ABN TV" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=3ABN+TV+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, '3ABN TV')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=3ABN+TV+Live');"></div>
+        <video id="video-abn" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">3ABN TV</p>
+      <button class="load-btn" onclick="loadStream('video-abn', 'https://3abn.bozztv.com/3abn/3abn_uganda_live/tracks-v2a1/mono.m3u8', 'https://via.placeholder.com/280x180.png?text=3ABN+TV+Live')">Play 3ABN TV</button>
+      <button class="pip-btn" onclick="togglePiP('video-abn')">PiP</button>
+    </div>
+
+    <!-- SPIRIT TV -->
+    <div class="channel" data-name="SPIRIT TV" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=SPIRIT+TV+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'SPIRIT TV')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=SPIRIT+TV+Live');"></div>
+        <video id="video-spirit" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">SPIRIT TV</p>
+      <button class="load-btn" onclick="loadStream('video-spirit', 'https://tv.tuhlprintltd.com/hls/0/stream.m3u8', 'https://via.placeholder.com/280x180.png?text=SPIRIT+TV+Live')">Play SPIRIT TV</button>
+      <button class="pip-btn" onclick="togglePiP('video-spirit')">PiP</button>
+    </div>
+
+    <!-- FORT TV -->
+    <div class="channel" data-name="FORT TV" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=FORT+TV+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'FORT TV')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=FORT+TV+Live');"></div>
+        <video id="video-ftv" controls></video>
+      </div>
+      <p style="margin-top:8px; font-weight:600;">FORT TV</p>
+      <button class="load-btn" onclick="loadStream('video-ftv', 'http://fort.co-works.org:8080/hls/live.stream.m3u8', 'https://via.placeholder.com/280x180.png?text=FORT+TV+Live')">Play FORT TV</button>
+      <button class="pip-btn" onclick="togglePiP('video-ftv')">PiP</button>
+    </div>
+        
+    <!-- ARK TV -->
+    <div class="channel" data-name="ARK TV" data-favorites="false">
+      <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=ARK+TV+Live">
+        <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'ARK TV')">★</div>
+        <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=ARK+TV+Live');"></div>
+        <!-- Video for video stream -->
+        <video id="video-stream" controls style="width:100%; height:150px;margin-top:8px"></video>
+        <!-- Audio for audio stream (hidden) -->
+        <audio id="audio-stream" controls style="display:none;"></audio>
+      </div>
+      <p style="margin-top:8px; font-weight:600;height:auto">ARK TV</p>
+      <button class="load-btn" onclick="loadStreams()">Play ARK TV</button>
+      <button class="pip-btn" onclick="togglePiP('video-stream')">PiP</button>
+    </div>
+
+<!-- Nicktoons -->
+<div class="channel" data-name="Nicktoons" data-favorites="false">
+  <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=Nicktoons+Live">
+    <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'Nicktoons')">★</div>
+    <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=Nicktoons+Live');"></div>
+    <video id="video-nicktoons" controls></video>
+  </div>
+  <p style="margin-top:8px; font-weight:600;">Nicktoons</p>
+  <button class="load-btn" onclick="loadStream('video-nicktoons', 'http://143.244.60.30/NICKTOONS/tracks-v1a1/mono.m3u8')">Play Nicktoons</button>
+  <button class="pip-btn" onclick="togglePiP('video-nicktoons')">PiP</button>
+</div>
+
+
+
+<!-- Dubai Sports HD -->
+<div class="channel" data-name="Dubai Sports HD" data-favorites="false">
+  <div class="video-container" data-current-image="https://via.placeholder.com/280x180.png?text=Dubai+Sports+HD+Live">
+    <div class="fav-star" title="Add to favorites" onclick="toggleFavorite(this, 'Dubai Sports HD')">★</div>
+    <div class="bg-image" style="background-image: url('https://via.placeholder.com/280x180.png?text=Dubai+Sports+HD+Live');"></div>
+    <video id="video-dubaisports" controls></video>
+  </div>
+  <p style="margin-top:8px; font-weight:600;">Dubai Sports HD</p>
+  <button class="load-btn" onclick="loadStream('video-dubaisports', 'http://dmitwlvvll.cdn.mangomolo.com/dubaisportshd/smil:dubaisportshd.smil/chunklist_b1600000.m3u8')">Play Dubai Sports HD</button>
+  <button class="pip-btn" onclick="togglePiP('video-dubaisports')">PiP</button>
+</div>
+
+  </div>
+
+
+<h2 style="margin-top:50px;">International & Other Channels</h2>
+  <div class="channel-grid" id="international-channels">
+    <!-- Example international channels --></div></div>
+<div id="groupe">
+
+
+<!-- Austria -->
+<div class="containerr">    <div class="header" onclick="toggleContent(this)">
+        <span>🇦🇹 Austria</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="content">
+        <div class="category">
+            <span class="redirect-icon" onclick="redirectTo('sports-austria')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Entertainment</span>
+            <span class="redirect-icon" onclick="redirectTo('entertainment-austria')">➡️</span>
+        </div>
+        <div class="category">
+            <span>News</span>
+            <span class="redirect-icon" onclick="redirectTo('news-austria')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Kids</span>
+            <span class="redirect-icon" onclick="redirectTo('kids-austria')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Other TV Guide</span>
+            <span class="redirect-icon" onclick="redirectTo('tvguide-austria')">➡️</span>
+        </div>
+    </div>
+</div>
+
+<!-- Afghanistan -->
+<div class="containerr">
+    <div class="header" onclick="toggleContent(this)">
+        <span>🇦🇫 Afghanistan</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="content">
+        <div class="category">
+            <span>sports</span><span class="redirect-icon" onclick="redirectTo('sports-afghanistan')"> ➡️</span>
+        </div>
+        <div class="category">
+            <span>Entertainment</span>
+            <span class="redirect-icon" onclick="redirectTo('entertainment-afghanistan')">➡️</span>
+        </div>
+        <div class="category">
+            <span>News</span>
+            <span class="redirect-icon" onclick="redirectTo('news-afghanistan')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Kids</span>
+            <span class="redirect-icon" onclick="redirectTo('kids-afghanistan')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Other TV Guide</span>
+            <span class="redirect-icon" onclick="redirectTo('tvguide-afghanistan')">➡️</span>
+        </div>
+    </div>
+</div>
+
+<!-- Albania -->
+<div class="containerr">
+    <div class="header" onclick="toggleContent(this)">
+        <span>🇦🇱 Albania</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="content">
+        <div class="category">
+            <span class="redirect-icon" onclick="redirectTo('sports-albania')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Entertainment</span>
+            <span class="redirect-icon" onclick="redirectTo('entertainment-albania')">➡️</span>
+        </div>
+        <div class="category">
+            <span>News</span>
+            <span class="redirect-icon" onclick="redirectTo('news-albania')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Kids</span>
+            <span class="redirect-icon" onclick="redirectTo('kids-albania')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Other TV Guide</span>
+            <span class="redirect-icon" onclick="redirectTo('tvguide-albania')">➡️</span>
+        </div>
+    </div>
+</div>
+
+<!-- Algeria -->
+<div class="containerr">
+    <div class="header" onclick="toggleContent(this)">
+        <span>🇩🇿 Algeria</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="content">
+        <div class="category">
+            <span class="redirect-icon" onclick="redirectTo('sports-algeria')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Entertainment</span>
+            <span class="redirect-icon" onclick="redirectTo('entertainment-algeria')">➡️</span>
+        </div>
+        <div class="category">
+            <span>News</span>
+            <span class="redirect-icon" onclick="redirectTo('news-algeria')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Kids</span>
+            <span class="redirect-icon" onclick="redirectTo('kids-algeria')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Other TV Guide</span>
+            <span class="redirect-icon" onclick="redirectTo('tvguide-algeria')">➡️</span>
+        </div>
+    </div>
+</div>
+
+<!-- Angola -->
+<div class="containerr">
+    <div class="header" onclick="toggleContent(this)">
+        <span>🇦🇴 Angola</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="content">
+        <div class="category">
+            <span class="redirect-icon" onclick="redirectTo('sports-angola')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Entertainment</span>
+            <span class="redirect-icon" onclick="redirectTo('entertainment-angola')">➡️</span>
+        </div>
+        <div class="category">
+            <span>News</span>
+            <span class="redirect-icon" onclick="redirectTo('news-angola')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Kids</span>
+            <span class="redirect-icon" onclick="redirectTo('kids-angola')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Other TV Guide</span>
+            <span class="redirect-icon" onclick="redirectTo('tvguide-angola')">➡️</span>
+        </div>
+    </div>
+</div>
+
+<!-- Antigua and Barbuda -->
+<div class="containerr">
+    <div class="header" onclick="toggleContent(this)">
+        <span>🇦🇬 Antigua and Barbuda</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="content">
+        <div class="category">
+            <span class="redirect-icon" onclick="redirectTo('sports-antigua')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Entertainment</span>
+            <span class="redirect-icon" onclick="redirectTo('entertainment-antigua')">➡️</span>
+        </div>
+        <div class="category">
+            <span>News</span>
+            <span class="redirect-icon" onclick="redirectTo('news-antigua')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Kids</span>
+            <span class="redirect-icon" onclick="redirectTo('kids-antigua')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Other TV Guide</span>
+            <span class="redirect-icon" onclick="redirectTo('tvguide-antigua')">➡️</span>
+        </div>
+    </div>
+</div>
+
+<!-- Argentina -->
+<div class="containerr">
+    <div class="header" onclick="toggleContent(this)">
+        <span>🇦🇷 Argentina</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="content">
+        <div class="category">
+            <span class="redirect-icon" onclick="redirectTo('sports-argentina')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Entertainment</span>
+            <span class="redirect-icon" onclick="redirectTo('entertainment-argentina')">➡️</span>
+        </div>
+        <div class="category">
+            <span>News</span>
+            <span class="redirect-icon" onclick="redirectTo('news-argentina')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Kids</span>
+            <span class="redirect-icon" onclick="redirectTo('kids-argentina')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Other TV Guide</span>
+            <span class="redirect-icon" onclick="redirectTo('tvguide-argentina')">➡️</span>
+        </div>
+    </div>
+</div>
+
+<!-- Armenia -->
+<div class="containerr">
+    <div class="header" onclick="toggleContent(this)">
+        <span>🇦🇲 Armenia</span>
+        <span class="icon">▼</span>
+    </div>
+    <div class="content">
+        <div class="category">
+            <span class="redirect-icon" onclick="redirectTo('sports-armenia')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Entertainment</span>
+            <span class="redirect-icon" onclick="redirectTo('entertainment-armenia')">➡️</span>
+        </div>
+        <div class="category">
+            <span>News</span>
+            <span class="redirect-icon" onclick="redirectTo('news-armenia')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Kids</span>
+            <span class="redirect-icon" onclick="redirectTo('kids-armenia')">➡️</span>
+        </div>
+        <div class="category">
+            <span>Other TV Guide</span>
+            <span class="redirect-icon" onclick="redirectTo('tvguide-armenia')">➡️</span>
+        </div>
+    </div>
+</div>
+
+<div class="containerr">
+
+ 
+      </div>
+  </div> 
+</div>
+</div>
+</div>
+ <script>
+function toggleContent(header) {
+    header.classList.toggle("active");
+    var content = header.nextElementSibling;
+    content.classList.toggle("show");
+}
+
+function redirectTo(category) {
+    // You can replace this with actual redirection URLs
+    alert("Redirecting to " + category);
+    // Example:
+    // window.location.href = 'https://example.com/' + category;
+}
+</script>
+
+
+<script>
+  // Initialize favorites from localStorage
+  let favorites = new Set(JSON.parse(localStorage.getItem('favorites')) || []);
+
+  // Initialize theme from localStorage
+  const storedTheme = localStorage.getItem('theme');
+  if (storedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+    document.getElementById('mode-toggle').textContent = 'Light Mode';
+  } else {
+    document.body.classList.remove('dark-mode');
+    document.getElementById('mode-toggle').textContent = 'Dark Mode';
+  }
+
+  // People watching count simulation
+  let watchCount = 823;
+  const watchSpan = document.getElementById('watch-count');
+  setInterval(() => {
+    watchCount += Math.floor(Math.random() * 53) + 21;
+    watchSpan.textContent = watchCount.toLocaleString();
+  }, 2000);
+
+  // Theme toggle
+  const modeBtn = document.getElementById('mode-toggle');
+  modeBtn.onclick = () => {
+    document.body.classList.toggle('dark-mode');
+    if (document.body.classList.contains('dark-mode')) {
+      localStorage.setItem('theme', 'dark');
+      modeBtn.textContent = 'Light Mode';
+    } else {
+      localStorage.setItem('theme', 'light');
+      modeBtn.textContent = 'Dark Mode';
+    }
+  };
+
+  // Sidebar toggle
+  const sidebar = document.getElementById('sidebar');
+  document.getElementById('toggle-sidebar').onclick = () => {
+    sidebar.classList.toggle('active');
+  };
+
+  // Load favorites from localStorage
+  function loadFavorites() {
+    favorites.forEach(name => {
+      // Find the channel element with data-name
+      document.querySelectorAll('.channel').forEach(div => {
+        if (div.getAttribute('data-name') === name) {
+          div.setAttribute('data-favorites', 'true');
+          const star = div.querySelector('.fav-star');
+          if (star) star.classList.add('favorited');
+        }
+      });
+      addFavoriteToList(name);
+    });
+  }
+
+  // Save favorites to localStorage
+  function saveFavorites() {
+    localStorage.setItem('favorites', JSON.stringify(Array.from(favorites)));
+  }
+
+  // Toggle favorite status
+  function toggleFavorite(starElement, channelName) {
+    const channelDivs = document.querySelectorAll('.channel');
+    let channelDiv = null;
+
+    channelDivs.forEach(div => {
+      if (div.getAttribute('data-name') === channelName) {
+        channelDiv = div;
+      }
+    });
+    if (!channelDiv) return;
+
+    const isFav = channelDiv.getAttribute('data-favorites') === 'true';
+
+    if (isFav) {
+      // Remove from favorites
+      channelDiv.setAttribute('data-favorites', 'false');
+      starElement.classList.remove('favorited');
+      favorites.delete(channelName);
+      removeFavoriteFromList(channelName);
+    } else {
+      // Add to favorites
+      channelDiv.setAttribute('data-favorites', 'true');
+      starElement.classList.add('favorited');
+      favorites.add(channelName);
+      addFavoriteToList(channelName);
+    }
+    saveFavorites();
+  }
+
+  function addFavoriteToList(channelName) {
+    const li = document.createElement('li');
+    li.dataset.name = channelName;
+    li.innerHTML = `<span>${channelName}</span> <button onclick="removeFavorite('${channelName}')">×</button>`;
+    document.getElementById('favorites-list').appendChild(li);
+  }
+
+  function removeFavoriteFromList(channelName) {
+    Array.from(document.getElementById('favorites-list').children).forEach(li => {
+      if (li.dataset.name === channelName) li.remove();
+    });
+  }
+
+  function removeFavorite(channelName) {
+    // Find the channel card and update star
+    document.querySelectorAll('.channel').forEach(ch => {
+      if (ch.getAttribute('data-name') === channelName) {
+        ch.setAttribute('data-favorites', 'false');
+        const star = ch.querySelector('.fav-star');
+        if (star) star.classList.remove('favorited');
+      }
+    });
+    // Remove from favorites list
+    removeFavoriteFromList(channelName);
+    // Update favorites set and save
+    favorites.delete(channelName);
+    saveFavorites();
+  }
+
+  // Load favorites on page load
+  window.onload = () => {
+    loadFavorites();
+  };
+
+  // Load stream function
+  function loadStream(videoId, streamUrl, programImageUrl) {
+    // Stop all videos
+    document.querySelectorAll('video').forEach(v => {
+      v.pause();
+      if (v.hls) {
+        v.hls.destroy();
+        v.hls = null;
+      }
+    });
+    const video = document.getElementById(videoId);
+    const container = video.closest('.video-container');
+    const bgDiv = container.querySelector('.bg-image');
+
+    // Set background image
+    bgDiv.style.backgroundImage = `url('${programImageUrl}')`;
+    bgDiv.style.opacity = '1';
+
+    // Load stream
+    if (video.hls) {
+      video.hls.destroy();
+    }
+
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      video.hls = hls;
+      hls.loadSource(streamUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().then(() => {
+          bgDiv.style.opacity = '0';
+        }).catch(e => console.error("Error playing video:", e));
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native support
+      video.src = streamUrl;
+      video.play().then(() => {
+        bgDiv.style.opacity = '0';
+      }).catch(e => console.error("Error playing video:", e));
+    } else {
+      alert('Your browser does not support HLS playback.');
+    }
+  }
+
+  async function togglePiP(videoId) {
+    const video = document.getElementById(videoId);
+    if (!video) return;
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else {
+        await video.requestPictureInPicture();
+      }
+    } catch (err) {
+      console.error("PiP Error:", err);
+      alert("Your browser does not support PiP or an error occurred.");
+    }
+  }
+
+
+// Set up event listeners on all videos to toggle background image
+document.querySelectorAll('video').forEach(v => {
+  v.addEventListener('play', () => {
+    const container = v.closest('.video-container');
+    const bgDiv = container.querySelector('.bg-image');
+    bgDiv.style.opacity = '0'; // hide placeholder when playing
+  });
+  v.addEventListener('pause', () => {
+    const container = v.closest('.video-container');
+    const bgDiv = container.querySelector('.bg-image');
+    bgDiv.style.opacity = '1'; // show placeholder when paused
+  });
+  v.addEventListener('ended', () => {
+    const container = v.closest('.video-container');
+    const bgDiv = container.querySelector('.bg-image');
+    bgDiv.style.opacity = '1'; // show placeholder when video ends
+  });
+});
+
+
+  // Search filtering
+  document.getElementById('search-button').onclick = () => {
+    const query = document.getElementById('search-input').value.toLowerCase();
+    document.querySelectorAll('#individual-channels .channel').forEach(c => {
+      const name = c.getAttribute('data-name').toLowerCase();
+      c.style.display = name.includes(query) ? '' : 'none';
+    });
+  };
+  document.getElementById('search-input').onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      document.getElementById('search-button').click();
+    }
+  };
+  
+  
+  function loadStreams() {
+  const videoElement = document.getElementById('video-stream');
+  const audioElement = document.getElementById('audio-stream');
+
+  const videoURL = 'https://stream.hydeinnovations.com/arktv-international/tracks-v2/index.fmp4.m3u8';
+  const audioURL = 'https://stream.hydeinnovations.com/arktv-international/tracks-a1/index.fmp4.m3u8';
+
+  // Load video stream
+  if (Hls.isSupported()) {
+    const hlsVideo = new Hls();
+    hlsVideo.loadSource(videoURL);
+    hlsVideo.attachMedia(videoElement);
+  } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+    videoElement.src = videoURL;
+  }
+
+  // Load audio stream
+  if (Hls.isSupported()) {
+    const hlsAudio = new Hls();
+    hlsAudio.loadSource(audioURL);
+    hlsAudio.attachMedia(audioElement);
+  } else if (audioElement.canPlayType('application/vnd.apple.mpegurl')) {
+    audioElement.src = audioURL;
+  }
+
+  // Play both
+  Promise.all([videoElement.play(), audioElement.play()]).catch(console.error);
+}
+  
+  
+</script>
+<footer class="footer">
+  <div class="footer-content">
+    <b>Share with friends:</b>
+    <div class="social-links">
+      <div><a href="whatsapp://send?text=*JOIN NOW! 📺👋*
+
+*Don't Miss Out on Live TV! 📺*
+
+Join us on:
+
+- WhatsApp: Click to join and stay entertained! 📱
+- Telegram: Join our channel for live updates and more! 📢http://t.me/movielibrary6 
+
+*Join Now and Enjoy Live TV! 📺❤️*" target="_blank" class="whatsapp">WhatsApp</a></div>
+      <div><a href="http://t.me/brave256" target="_blank" class="telegram">Telegram</a></div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
