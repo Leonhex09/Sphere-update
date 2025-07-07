@@ -1207,23 +1207,28 @@ channels: [
     proxyUrl: "http://localhost:3000/proxy?url=",
     isLocal: true
   },
+ channels: [
+  // ... your existing channels ...
   {
     name: "ARK TV",
     image: "https://via.placeholder.com/280x180.png?text=ARK+TV+Live",
     streamUrl: "https://stream.hydeinnovations.com/arktv-international/tracks-v2/index.fmp4.m3u8",
     audioUrl: "https://stream.hydeinnovations.com/arktv-international/tracks-a1/index.fmp4.m3u8",
+    proxyUrl: "http://localhost:3000/proxy?url=",
     isLocal: true
   },
   {
     name: "Nicktoons",
     image: "https://via.placeholder.com/280x180.png?text=Nicktoons+Live",
     streamUrl: "http://143.244.60.30/NICKTOONS/tracks-v1a1/mono.m3u8",
+    proxyUrl: "http://localhost:3000/proxy?url=",
     isLocal: false
   },
   {
     name: "Dubai Sports HD",
     image: "https://via.placeholder.com/280x180.png?text=Dubai+Sports+HD",
     streamUrl: "https://dubaiairports.stream/stream.m3u8",
+    proxyUrl: "http://localhost:3000/proxy?url=",
     isLocal: false
   }
 ]
