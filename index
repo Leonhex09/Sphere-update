@@ -1230,5 +1230,220 @@ channels: [
     streamUrl: "https://dubaiairports.stream/stream.m3u8",
     proxyUrl: "http://localhost:3000/proxy?url=",
     isLocal: false
+  };
+
+// Utility functions
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.className = 'toast show ' + type;
+  toast.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+  setTimeout(() => {
+    toast.className = 'toast';
+  }, 3000);
+}
+
+function populateChannels() {
+  const localContainer = document.getElementById('channel-grid');
+  const internationalContainer = document.getElementById('international-channels');
+  localContainer.innerHTML = '';
+  internationalContainer.innerHTML = '';
+
+  config.channels.forEach(channel => {
+    const card = createChannelCard(channel);
+    if (channel.isLocal) {
+      localContainer.appendChild(card);
+    } else {
+      internationalContainer.appendChild(card);
+    }
+  });
+}
+
+// Create channel card
+function createChannelCard(channel) {
+  const card = document.createElement('div');
+  card.className = 'channel';
+
+  // Favorite star
+  const favStar = document.createElement('i');
+  favStar.className = 'fas fa-star fav-star';
+  favStar.onclick = () => toggleFavorite(channel);
+  if (isFavorited(channel)) {
+    favStar.classList.add('favorited');
   }
-]
+
+  // Video container
+  const videoContainer = document.createElement('div');
+  videoContainer.className = 'video-container';
+
+  // Video element
+  const video = document.createElement('video');
+  video.setAttribute('controls', true);
+  video.setAttribute('poster', channel.image);
+  video.setAttribute('playsinline', true);
+  video.setAttribute('preload', 'metadata');
+
+  // Load stream with HLS.js if needed
+  if (Hls.isSupported() && channel.streamUrl.endsWith('.m3u8')) {
+    const hls = new Hls();
+    hls.loadSource(channel.streamUrl);
+    hls.attachMedia(video);
+  } else {
+    // Fallback for non-HLS
+    video.src = channel.streamUrl;
+  }
+
+  // Channel info
+  const channelInfo = document.createElement('div');
+  channelInfo.className = 'channel-info';
+
+  const channelName = document.createElement('div');
+  channelName.className = 'channel-name';
+  channelName.innerText = channel.name;
+
+  // Play button
+  const playBtn = document.createElement('button');
+  playBtn.className = 'btn';
+  playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+  playBtn.onclick = () => {
+    // Play stream in overlay or same container
+    if (Hls.isSupported() && channel.streamUrl.endsWith('.m3u8')) {
+      const hls = new Hls();
+      hls.loadSource(channel.streamUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play();
+      });
+    } else {
+      video.src = channel.streamUrl;
+      video.play();
+    }
+    showNowPlaying(channel.name);
+  };
+
+  // Append elements
+  channelInfo.appendChild(channelName);
+  channelInfo.appendChild(playBtn);
+  videoContainer.appendChild(video);
+  card.appendChild(favStar);
+  card.appendChild(videoContainer);
+  card.appendChild(channelInfo);
+  return card;
+}
+
+// Favorites
+const favoritesKey = 'favoriteChannels';
+
+function getFavorites() {
+  const favs = localStorage.getItem(favoritesKey);
+  return favs ? JSON.parse(favs) : [];
+}
+
+function isFavorited(channel) {
+  return getFavorites().some(fav => fav.name === channel.name);
+}
+
+function toggleFavorite(channel) {
+  let favs = getFavorites();
+  if (isFavorited(channel)) {
+    favs = favs.filter(f => f.name !== channel.name);
+    showToast(`Removed ${channel.name} from favorites`, 'warning');
+  } else {
+    favs.push({ name: channel.name, image: channel.image, streamUrl: channel.streamUrl });
+    showToast(`Added ${channel.name} to favorites`);
+  }
+  localStorage.setItem(favoritesKey, JSON.stringify(favs));
+  updateFavoritesList();
+  populateChannels();
+}
+
+function updateFavoritesList() {
+  const list = document.getElementById('favorites-list');
+  list.innerHTML = '';
+  getFavorites().forEach(fav => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="channel-title">${fav.name}</div>
+      <button class="remove-fav" onclick="removeFavorite('${fav.name}')"><i class="fas fa-times"></i></button>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function removeFavorite(name) {
+  let favs = getFavorites();
+  favs = favs.filter(f => f.name !== name);
+  localStorage.setItem(favoritesKey, JSON.stringify(favs));
+  updateFavoritesList();
+  showToast(`Removed ${name} from favorites`, 'warning');
+  populateChannels();
+}
+
+// Theme toggle
+const modeToggleBtn = document.getElementById('mode-toggle');
+modeToggleBtn.onclick = () => {
+  document.body.classList.toggle('dark-mode');
+  updateModeText();
+};
+
+function updateModeText() {
+  const isDark = document.body.classList.contains('dark-mode');
+  modeToggleBtn.innerHTML = `<i class="fas fa-${isDark ? 'sun' : 'moon'}"></i> ${isDark ? 'Light Mode' : 'Dark Mode'}`;
+}
+
+// Now playing indicator
+const nowPlaying = document.createElement('div');
+nowPlaying.className = 'now-playing';
+document.body.appendChild(nowPlaying);
+
+function showNowPlaying(channelName) {
+  nowPlaying.innerText = `Now Playing: ${channelName}`;
+  nowPlaying.classList.add('active');
+  setTimeout(() => {
+    nowPlaying.classList.remove('active');
+  }, 3000);
+}
+
+// Share functions
+function shareOnWhatsApp() {
+  const url = encodeURIComponent(window.location.href);
+  const message = encodeURIComponent('Check out this awesome Live TV platform: ' + window.location.href);
+  window.open(`https://wa.me/?text=${message}`, '_blank');
+}
+
+function shareOnTelegram() {
+  const url = encodeURIComponent(window.location.href);
+  const message = encodeURIComponent('Check out this awesome Live TV platform: ' + window.location.href);
+  window.open(`https://t.me/share/url?url=${url}&text=${message}`, '_blank');
+}
+
+// Sidebar toggle
+const sidebar = document.getElementById('sidebar');
+const closeSidebarBtn = document.getElementById('close-sidebar');
+
+document.querySelector('.fa-star').addEventListener('click', () => {
+  // Toggle sidebar
+  sidebar.classList.toggle('active');
+});
+
+document.getElementById('close-sidebar').onclick = () => {
+  sidebar.classList.remove('active');
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  populateChannels();
+  updateFavoritesList();
+  updateModeText();
+
+  // Update viewer count periodically
+  const watchCountSpan = document.getElementById('watch-count');
+  setInterval(() => {
+    const randomIncrement = Math.floor(Math.random() * config.viewerRandomRange);
+    const totalCount = config.viewerBaseCount + randomIncrement;
+    watchCountSpan.innerText = totalCount.toLocaleString();
+  }, config.viewerUpdateInterval);
+});
+</script>
+
+</body>
+</html>
